@@ -21,67 +21,67 @@
 package cmd
 
 import (
-  "fmt"
-  "math/rand"
-  "os"
+	"fmt"
+	"math/rand"
+	"os"
 	"time"
 
+	"github.com/drhodes/golorem"
 	"github.com/rs/zerolog"
-  "gopkg.in/kyokomi/emoji.v1"
 	"github.com/spf13/cobra"
-  "github.com/drhodes/golorem"
+	"gopkg.in/kyokomi/emoji.v1"
 )
 
 // return a randomly-selected emoji character
 func randEmoji() string {
-  // FIXME: larger corpus!
-  corpus := []string{
-    ":beer:", ":+1:", ":pizza:",
-  }
-  return emoji.Sprint(corpus[rand.Intn(len(corpus))])
+	// FIXME: larger corpus!
+	corpus := []string{
+		":beer:", ":+1:", ":pizza:",
+	}
+	return emoji.Sprint(corpus[rand.Intn(len(corpus))])
 }
 
 var (
-  logspewEmojiContent       bool
-  logspewEmojiFieldNames    bool
-  logspewFieldCount         int
-  logspewFieldContentLength int
-  logspewInterval           time.Duration
-  // logspewCmd represents the logspew command
-  logspewCmd = &cobra.Command{
-    Use:   "logspew",
-    Short: "Emit an infinite stream of random logs",
-    Long: `Generate a stream of random JSON-formatted log data and emit it to stdout.
+	logspewEmojiContent       bool
+	logspewEmojiFieldNames    bool
+	logspewFieldCount         int
+	logspewFieldContentLength int
+	logspewInterval           time.Duration
+	// logspewCmd represents the logspew command
+	logspewCmd = &cobra.Command{
+		Use:   "logspew",
+		Short: "Emit an infinite stream of random logs",
+		Long: `Generate a stream of random JSON-formatted log data and emit it to stdout.
   Optionally include emoji for testing UTF8 conformance.`,
-    Run: func(cmd *cobra.Command, args []string) {
-      rand.Seed(time.Now().Unix())
-      logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
-      for i := 0; true; i++ {
-        event := logger.Info()
-        for i := 0; i < logspewFieldCount; i++ {
-          name := fmt.Sprintf("spew%d", i)
-          if logspewEmojiFieldNames {
-            name = name + randEmoji()
-          }
-          value := lorem.Sentence(logspewFieldContentLength/3,logspewFieldContentLength)
-          if logspewEmojiContent {
-            value = value + randEmoji()
-          }
-          event = event.Str(name,value)
-        }
-        event.Int("seq", i)
-        event.Msg("logspew")
-        time.Sleep(logspewInterval)
-      }
-    },
-  }
+		Run: func(cmd *cobra.Command, args []string) {
+			rand.Seed(time.Now().Unix())
+			logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
+			for i := 0; true; i++ {
+				event := logger.Info()
+				for i := 0; i < logspewFieldCount; i++ {
+					name := fmt.Sprintf("spew%d", i)
+					if logspewEmojiFieldNames {
+						name = name + randEmoji()
+					}
+					value := lorem.Sentence(logspewFieldContentLength/3, logspewFieldContentLength)
+					if logspewEmojiContent {
+						value = value + randEmoji()
+					}
+					event = event.Str(name, value)
+				}
+				event.Int("seq", i)
+				event.Msg("logspew")
+				time.Sleep(logspewInterval)
+			}
+		},
+	}
 )
 
 func init() {
 	rootCmd.AddCommand(logspewCmd)
 	logspewCmd.Flags().BoolVar(&logspewEmojiContent, "emoji-in-content", true, "Include emoji in the output fields")
 	logspewCmd.Flags().BoolVar(&logspewEmojiFieldNames, "emoji-in-field-names", false, "Include emoji in the output field names")
-  logspewCmd.Flags().IntVar(&logspewFieldCount, "field-count", 5, "How many additional JSON fields to each log entry")
-  logspewCmd.Flags().IntVar(&logspewFieldContentLength, "field-content-length", 15, "How long each additional JSON fields should be")
-  logspewCmd.Flags().DurationVarP(&logspewInterval, "interval", "i", 5*time.Second, "Interval between log entries")
+	logspewCmd.Flags().IntVar(&logspewFieldCount, "field-count", 5, "How many additional JSON fields to each log entry")
+	logspewCmd.Flags().IntVar(&logspewFieldContentLength, "field-content-length", 15, "How long each additional JSON fields should be")
+	logspewCmd.Flags().DurationVarP(&logspewInterval, "interval", "i", 5*time.Second, "Interval between log entries")
 }

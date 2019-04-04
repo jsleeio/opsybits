@@ -21,8 +21,8 @@
 package cmd
 
 import (
+	"fmt"
 	"io"
-  "fmt"
 	"net/http"
 	"time"
 
@@ -31,53 +31,44 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	him8Histogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "http_request_seconds",
+		Help:    "HTTP response time",
+		Buckets: []float64{1, 2, 5, 10},
+	}, []string{"code"})
+	him8Delay   time.Duration
+	him8Message string
+	him8Path    string
+	him8Listen  string
+	him8Cmd     = &cobra.Command{
+		Use:   "hi-m8",
+		Short: "Host a single message on an HTTP endpoint",
+		Long: `hi-m8 simply listens on an HTTP endpoint and returns a static message.
+Optionally, an artificial delay can be added prior to the message being returned.`,
+		Run: func(cmd *cobra.Command, args []string) {
+			prometheus.Register(him8Histogram)
+			http.Handle("/metrics", promhttp.Handler())
+			http.HandleFunc("/healthz", healthz)
+			http.HandleFunc(him8Path, him8)
+			http.ListenAndServe(him8Listen, nil)
+		},
+	}
+)
+
 func healthz(w http.ResponseWriter, r *http.Request) {
-  io.WriteString(w, "OK")
+	io.WriteString(w, "OK")
 }
 
 func him8(w http.ResponseWriter, r *http.Request) {
-  time.Sleep(him8Delay)
-  io.WriteString(w, him8Message)
-  startTime := time.Now()
-  code := 500
-  defer r.Body.Close()
-  defer func() {
-    httpDuration := time.Since(startTime)
-    him8Histogram.WithLabelValues(fmt.Sprintf("%d", code)).Observe(httpDuration.Seconds())
-  }()
-  code = http.StatusBadRequest
-  if r.Method == "GET" {
-    code = http.StatusOK
-    w.Write([]byte(him8Message))
-  } else {
-    w.WriteHeader(code)
-  }
+	time.Sleep(him8Delay)
+	startTime := time.Now()
+	defer func() {
+		r.Body.Close()
+		him8Histogram.WithLabelValues(fmt.Sprint(http.StatusOK)).Observe(time.Since(startTime).Seconds())
+	}()
+	w.Write([]byte(him8Message))
 }
-
-var (
-  him8Histogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-    Name:    "http_request_seconds",
-    Help:    "HTTP response time",
-    Buckets: []float64{1, 2, 5, 10},
-  }, []string{"code"})
-  him8Delay   time.Duration
-  him8Message string
-  him8Path    string
-  him8Listen  string
-  him8Cmd = &cobra.Command{
-    Use:   "hi-m8",
-    Short: "Host a single message on an HTTP endpoint",
-    Long: `hi-m8 simply listens on an HTTP endpoint and returns a static message.
-Optionally, an artificial delay can be added prior to the message being returned.`,
-    Run: func(cmd *cobra.Command, args []string) {
-      prometheus.Register(him8Histogram)
-      http.Handle("/metrics", promhttp.Handler())
-      http.HandleFunc("/healthz", healthz)
-      http.HandleFunc(him8Path, him8)
-      http.ListenAndServe(him8Listen, nil)
-    },
-  }
-)
 
 func init() {
 	rootCmd.AddCommand(him8Cmd)

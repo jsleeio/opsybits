@@ -43,5 +43,5 @@ $ opsybits APPLET --help
 ## Docker
 
 ```
-$ docker run gcr.io/jsleeio-containers/opsybits:v0.1.0
+$ docker run gcr.io/jsleeio-containers/opsybits:v0.1.3
 ```

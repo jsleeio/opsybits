@@ -1,4 +1,4 @@
-// Copyright © 2018 John Slee <john@sleefamily.org>
+// Copyright © 2019 John Slee <john@sleefamily.org>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -34,13 +34,14 @@ var cfgFile string
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "opsybits",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Short: "An assortment of little opsy utilities that don't fit elsewhere",
+  Long: `opsybits fills a few little gaps in container infrastructure:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+* a test source of Prometheus metrics
+* a simple canary webserver that returns a static message
+* optionally, a canary webserver that responds slowly...
+* a test source of JSON log data, optionally with emoji to test UTF-8 handling
+`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	//	Run: func(cmd *cobra.Command, args []string) { },
